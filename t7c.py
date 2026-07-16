@@ -7,6 +7,7 @@ import subprocess
 import ssl
 import urllib.request
 import urllib.error
+import urllib.parse
 
 # --- Configuration Section ---
 CONFIG_DIR = os.path.expanduser("~/.config/nodemixaholic-software/tiny-7coder")
@@ -117,20 +118,22 @@ def get_site_contents(url):
 
 def web_search(q):
     try:
+        url = SEARCH_PREFIX + urllib.parse.quote_plus(q)
+
         result = subprocess.run(
-            "curl '" + SEARCH_PREFIX + q + "'",
-            shell=True,
+            ["curl", url],
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             text=True,
             timeout=120
         )
+
         output = result.stdout
         if result.stderr:
             output += "\nSTDERR:\n" + result.stderr
         return output.strip()
     except Exception as e:
-        return f"Error getting web search contents: {str(e)}"
+        return f"Error getting web search contents: {e}"
 
 # --- Tool Execution Router ---
 def execute_tool(proposed_command):
