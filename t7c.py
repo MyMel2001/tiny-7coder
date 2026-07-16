@@ -99,6 +99,12 @@ def list_files(dir):
     except Exception as e:
         return f"Error listing files: {str(e)}"
 
+def agent_say(yap):
+    try:
+        print("<AI>: " + yap)
+    except Exception as e:
+        return f"Error yapping: {str(e)}"
+
 def get_site_contents(url):
     try:
         result = subprocess.run(
@@ -158,6 +164,8 @@ def execute_tool(proposed_command):
         return run_bash(args)
     elif tool == "list_files":
         return list_files(args)
+    elif tool == "agent_say":
+        return agent_say(args)
     elif tool == "get_site_contents":
         return get_site_contents(args)
     elif tool == "web_search":
@@ -178,6 +186,7 @@ You have access to these tools:
 5. list_files <dir_path> : Lists all files in a directory.
 6. get_site_contents <url> : Gets HTML source of page via CURL
 7. web_search <query> : Gets HTML source of a web search via CURL.
+8. agent_say <msg> : Echo out a message to the user.
 
 Rules:
 1. You work in an iterative loop. Output exactly ONE tool call at a time.
