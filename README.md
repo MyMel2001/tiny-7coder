@@ -107,7 +107,7 @@ tiny-7coder "Update the README with installation instructions"
 DONE
 ```
 
-The agent limits execution to 10 steps per request to prevent runaway operations.
+The agent limits execution to 200 steps per request to prevent runaway operations.
 
 ## Security Notes
 
