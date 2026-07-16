@@ -147,7 +147,18 @@ while true; do
     echo "DEBUG: payload size ${#PLAN_PAYLOAD}"
 
     # Call LLM
-    PLAN_PAYLOAD=$(jq -n --arg m "$MODEL" --arg p "$PROMPT" '{model: $m, prompt: $p, stream: false}')
+    if ! PLAN_PAYLOAD=$(jq -n \
+    --arg m "$MODEL" \
+    --arg p "$PROMPT" \
+    '{model: $m, prompt: $p, stream: false}'
+); then
+    echo "❌ Failed to create JSON payload"
+    exit 1
+fi
+    echo "DEBUG: MODEL=$MODEL"
+echo "DEBUG: HOST=$HOST"
+echo "DEBUG: payload:"
+echo "$PLAN_PAYLOAD"
     PLAN_RESPONSE=$(curl -v --fail --connect-timeout 10 \
   -X POST "http://$HOST/api/generate" \
   -H "Content-Type: application/json" \
