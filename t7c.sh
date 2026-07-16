@@ -34,11 +34,11 @@ if [ -f "$ENV_FILE" ]; then
     done < "$ENV_FILE"
 else
     echo "Warning: $ENV_FILE file not found." >&2
-    API_URL="${OPENAI_API_BASE:-https://api.openai.com/v1}/chat/completions"
-    MODEL="${OPENAI_MODEL_NAME:-gpt-4o-mini}"
-    API_KEY="${OPENAI_API_KEY:-}"
 fi
 
+API_URL="${OPENAI_API_BASE:-https://api.openai.com/v1}/chat/completions"
+MODEL="${OPENAI_MODEL_NAME:-gpt-4o-mini}"
+API_KEY="${OPENAI_API_KEY:-}"
 if [ -z "$API_KEY" ]; then
     echo "Error: OPENAI_API_KEY environment variable is not set." >&2
     exit 1
