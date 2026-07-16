@@ -4,7 +4,10 @@
 set -euo pipefail
 
 # === CONFIGURATION ===
+PROJECT_DIR="$(realpath .)"
+T7C_DIR="$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
 
+cd "$T7C_DIR"
 # Path to your .env file
 ENV_FILE=".env"
 
@@ -40,7 +43,7 @@ if [ -z "$API_KEY" ]; then
     echo "Error: OPENAI_API_KEY environment variable is not set." >&2
     exit 1
 fi
-
+cd "$PROJECT_DIR"
 # Unique temporary paths for persistent background shell (Haiku, Mac, Linux friendly)
 TMP_DIR=$(mktemp -d -t claude-harness-XXXXXX)
 FIFO_IN="$TMP_DIR/bash_in"
