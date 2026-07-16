@@ -37,9 +37,12 @@ MODEL = os.environ.get("MODEL", "deepseek-v4-flash:cloud")
 HOST = os.environ.get("HOST", "100.118.11.83:11434")
 VERIFY_SSL = os.environ.get("VERIFY_SSL", "true").lower() not in ("false", "0", "no")
 
+
+PROJECT_DIR = os.getcwd()
 # --- Helper Tool Functions ---
 def read_file(filepath):
     try:
+        filepath = PROJECT_DIR + "/" + filepath
         with open(filepath, "r", encoding="utf-8") as f:
             return f.read()
     except Exception as e:
@@ -47,6 +50,7 @@ def read_file(filepath):
 
 def append_file(filepath, content):
     try:
+        filepath = PROJECT_DIR + "/" + filepath
         with open(filepath, "a", encoding="utf-8") as f:
             f.write(content + "\n")
         return f"Successfully appended to {filepath}"
@@ -55,6 +59,7 @@ def append_file(filepath, content):
 
 def replace_file(filepath, content):
     try:
+        filepath = PROJECT_DIR + "/" + filepath
         with open(filepath, "w", encoding="utf-8") as f:
             f.write(content)
         return f"Successfully wrote to {filepath}"
@@ -77,6 +82,24 @@ def run_bash(command):
         return output.strip()
     except Exception as e:
         return f"Error executing command: {str(e)}"
+
+def list_files(dir):
+    try:
+        dir = PROJECT_DIR + "/" + dir
+        result = subprocess.run(
+            "ls -lah " + dir,
+            shell=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+            timeout=120
+        )
+        output = result.stdout
+        if result.stderr:
+            output += "\nSTDERR:\n" + result.stderr
+        return output.strip()
+    except Exception as e:
+        return f"Error listing files: {str(e)}"
 
 # --- Tool Execution Router ---
 def execute_tool(proposed_command):
@@ -101,6 +124,8 @@ def execute_tool(proposed_command):
         return replace_file(path, content)
     elif tool == "bash":
         return run_bash(args)
+    elif tool == "list_files":
+        return list_files(args)
     else:
         # Fallback: if no clear tool prefix is matched, treat the whole line as a bash command
         return run_bash(proposed_command)
@@ -114,11 +139,13 @@ You have access to these tools:
 2. append_file <file_path> <content> : Appends text to a file.
 3. replace_file <file_path> <content> : Overwrites/creates a file with content.
 4. bash <command> : Runs a standard shell command.
+5. list_files <dir_path> : Lists all files in a directory.
 
 Rules:
 1. You work in an iterative loop. Output exactly ONE tool call at a time.
 2. If the task is fully completed, output the word 'DONE' instead of a tool call.
-3. Output ONLY the raw executable command or 'DONE'. Do not wrap in markdown, backticks, or write explanations."""
+3. Output ONLY the raw executable command or 'DONE'. Do not wrap in markdown, backticks, or write explanations.
+4. For every tool except bash we prepend the path with the user's project folder. The current project folder is: '""" + PROJECT_DIR """'."""
 
 # --- Main Agent Loop ---
 def main():
