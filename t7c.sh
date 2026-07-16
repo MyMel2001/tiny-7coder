@@ -130,9 +130,7 @@ echo "------------------------------------------------------------------"
 
 while true; do
     printf "\nUser > "
-    if ! read -r USER_INPUT; then
-        break
-    fi
+    read -r USER_INPUT
     
     # SAFE EMPTY CHECK: Standard if-statement prevents 'set -e' from crashing
     if [ -z "$USER_INPUT" ]; then
