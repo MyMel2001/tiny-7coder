@@ -78,18 +78,25 @@ Rules:
 - Do not overcomplicate shell commands."
 
 # --- Initialize Stateful Background Shell ---
-TMP_DIR=$(mktemp -d -t 7coder-XXXXXX)
+TMP_DIR=$(mktemp -d "${TMPDIR:-/tmp}/tiny-7coder-XXXXXX")
 FIFO_IN="$TMP_DIR/in"
 FIFO_OUT="$TMP_DIR/out"
 
 cleanup() {
-    rm -rf "$TMP_DIR"
-    kill $(jobs -p) 2>/dev/null || true
+    if [ -n "${TMP_DIR:-}" ]; then
+        rm -rf "$TMP_DIR"
+    fi
+
+    if [ -n "${SHELL_PID:-}" ]; then
+        kill "$SHELL_PID" 2>/dev/null || true
+    fi
 }
+
 trap cleanup EXIT
 
 mkfifo "$FIFO_IN" "$FIFO_OUT"
-bash --noprofile --norc -i < "$FIFO_IN" > "$FIFO_OUT" 2>&1 &
+bash --noprofile --norc < "$FIFO_IN" > "$FIFO_OUT" 2>&1 &
+SHELL_PID=$!
 
 exec 3> "$FIFO_IN"
 exec 4< "$FIFO_OUT"
@@ -97,7 +104,7 @@ exec 4< "$FIFO_OUT"
 # Persistent Shell Execution
 execute_bg() {
     local cmd="$1"
-    local sentinel="CMD_DONE_$(cat /dev/urandom | env LC_ALL=C tr -dc 'a-zA-Z0-9' | fold -w 16 | head -n 1)"
+    local sentinel="CMD_DONE_$(date +%s%N)"
     echo "$cmd" >&3
     echo "echo $sentinel" >&3
     while IFS= read -r line <&4; do
