@@ -197,7 +197,7 @@ def main():
 
     history = f"User Request: {prompt_request}"
     step = 1
-    max_steps = 10
+    max_steps = 200
 
     while step <= max_steps:
         print(f"Thinking (Step {step}, Model: {MODEL})...")
