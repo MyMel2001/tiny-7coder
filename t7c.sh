@@ -39,7 +39,7 @@ else
     API_KEY="${OPENAI_API_KEY:-}"
 fi
 
-if [ -z "$API_KEY" ]; then
+if [ -z "$OPENAI_API_KEY" ]; then
     echo "Error: OPENAI_API_KEY environment variable is not set." >&2
     exit 1
 fi
