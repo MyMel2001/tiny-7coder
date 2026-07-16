@@ -119,7 +119,6 @@ def get_site_contents(url):
 def web_search(q):
     try:
         url = SEARCH_PREFIX + urllib.parse.quote_plus(q)
-
         result = subprocess.run(
             ["curl", url],
             stdout=subprocess.PIPE,
@@ -127,7 +126,6 @@ def web_search(q):
             text=True,
             timeout=120
         )
-
         output = result.stdout
         if result.stderr:
             output += "\nSTDERR:\n" + result.stderr
