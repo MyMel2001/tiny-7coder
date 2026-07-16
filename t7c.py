@@ -4,6 +4,7 @@ import sys
 import json
 import platform
 import subprocess
+import ssl
 import urllib.request
 import urllib.error
 
@@ -34,6 +35,7 @@ if os.path.exists(ENV_FILE):
 # Set defaults
 MODEL = os.environ.get("MODEL", "deepseek-v4-flash:cloud")
 HOST = os.environ.get("HOST", "100.118.11.83:11434")
+VERIFY_SSL = os.environ.get("VERIFY_SSL", "true").lower() not in ("false", "0", "no")
 
 # --- Helper Tool Functions ---
 def read_file(filepath):
@@ -150,8 +152,13 @@ def main():
             "stream": False
         }
 
-        # Query the local/remote Ollama instance using urllib
-        req_url = f"http://{HOST}/api/generate"
+        # Parse HOST to handle schemes safely
+        host_clean = HOST.strip()
+        if host_clean.startswith("http://") or host_clean.startswith("https://"):
+            req_url = f"{host_clean.rstrip('/')}/api/generate"
+        else:
+            req_url = f"http://{host_clean}/api/generate"
+
         req_data = json.dumps(payload).encode("utf-8")
         req = urllib.request.Request(
             req_url, 
@@ -160,8 +167,14 @@ def main():
             method="POST"
         )
 
+        # Setup SSL context if needed
+        ssl_context = None
+        if req_url.startswith("https://") and not VERIFY_SSL:
+            ssl_context = ssl._create_unverified_context()
+
         try:
-            with urllib.request.urlopen(req) as response:
+            # Pass the ssl_context parameter directly into urlopen
+            with urllib.request.urlopen(req, context=ssl_context) as response:
                 res_data = json.loads(response.read().decode("utf-8"))
                 final_cmd = res_data.get("response", "").strip()
         except urllib.error.URLError as e:
