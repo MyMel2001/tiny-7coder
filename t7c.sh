@@ -133,7 +133,7 @@ while true; do
     read USER_INPUT
 
     # Append user message to conversation history
-    MESSAGES=$(echo "$MESSAGES" | jq --arg msg "$USER_INPUT" '. + [{"role": "user", "content": $msg}]')
+    MESSAGES="PREVIOUS HISTORY: $MESSAGES\n\nNOW: $USER_INPUT"
 
     # Agent loop (handling multiple sequential tool execution steps if needed)
     while true; do
