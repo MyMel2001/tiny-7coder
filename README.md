@@ -81,72 +81,9 @@ VERIFY_SSL=False
 | Variable     | Description                         | Default                   |
 | ------------ | ----------------------------------- | ------------------------- |
 | `MODEL`      | Model name to use                   | `deepseek-v4-flash:cloud` |
-| `HOST`       | Model API host                      | `127.0.0.1:11434`     |
+| `HOST`       | Model API host                      | `http://127.0.0.1:11434`     |
+| `SEARCH_PREFIX`       | Search query prefix                      | `https://searx.nodemixaholic.com/search?q=`     |
 | `VERIFY_SSL` | Enable SSL certificate verification | `false`                    |
-
-## Available Tools
-
-The agent can execute the following commands:
-
-### Read a file
-
-```
-read_file <path>
-```
-
-Example:
-
-```
-read_file README.md
-```
-
-### Append to a file
-
-```
-append_file <path> <content>
-```
-
-Example:
-
-```
-append_file notes.txt "Remember to update documentation"
-```
-
-### Replace a file
-
-```
-replace_file <path> <content>
-```
-
-Example:
-
-```
-replace_file hello.py "print('hello world')"
-```
-
-### Run a shell command
-
-```
-bash <command>
-```
-
-Example:
-
-```
-bash git status
-```
-
-### List files
-
-```
-list_files <directory>
-```
-
-Example:
-
-```
-list_files .
-```
 
 ## How It Works
 
