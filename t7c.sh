@@ -101,12 +101,16 @@ exec 4< "$FIFO_OUT"
 execute_bg() {
     local cmd="$1"
     local sentinel="CMD_DONE_$(date +%s%N)"
-    echo "$cmd" >&3
-    echo "echo $sentinel" >&3
+
+    echo "$cmd" >&3 || return 1
+    echo "echo $sentinel" >&3 || return 1
+
     while IFS= read -r line <&4; do
-        [[ "$line" == *"$sentinel"* ]] && break
+        [[ "$line" == *"$sentinel"* ]] && return 0
         echo "$line"
     done
+
+    return 1
 }
 
 # Identify the Host OS
@@ -139,15 +143,28 @@ while true; do
     CURRENT_PWD=$(execute_bg "pwd" | tr -d '\n\r')
 
     echo -e "Thinking ($MODEL)..." 
+    echo "DEBUG: sending request to http://$HOST/api/generate"
+    echo "DEBUG: payload size ${#PLAN_PAYLOAD}"
 
     # Call LLM
     PLAN_PAYLOAD=$(jq -n --arg m "$MODEL" --arg p "$PROMPT" '{model: $m, prompt: $p, stream: false}')
-    PLAN_RESPONSE=$(curl -s -X POST "http://$HOST/api/generate" \
+    PLAN_RESPONSE=$(curl -v --fail --connect-timeout 10 \
+  -X POST "http://$HOST/api/generate" \
   -H "Content-Type: application/json" \
-  -d "$PLAN_PAYLOAD")
+  -d "$PLAN_PAYLOAD" 2>&1) || {
+    echo "❌ curl failed:"
+    echo "$PLAN_RESPONSE"
+    exit 1
+}
     
     # Extract the tool JSON payload
-    RAW_JSON=$(echo "$PLAN_RESPONSE" | jq -r '.response')
+    RAW_JSON=$(echo "$PLAN_RESPONSE" | jq -r '.response // empty')
+
+if [ -z "$RAW_JSON" ]; then
+    echo "❌ Ollama returned no response:"
+    echo "$PLAN_RESPONSE"
+    exit 1
+fi
 
     # Validate JSON parsing
     if ! echo "$RAW_JSON" | jq . >/dev/null 2>&1; then
