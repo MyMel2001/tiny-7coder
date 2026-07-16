@@ -130,7 +130,7 @@ def web_search(q):
             output += "\nSTDERR:\n" + result.stderr
         return output.strip()
     except Exception as e:
-        return f"Error getting site contents: {str(e)}"
+        return f"Error getting web search contents: {str(e)}"
 
 # --- Tool Execution Router ---
 def execute_tool(proposed_command):
