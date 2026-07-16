@@ -101,6 +101,7 @@ def list_files(dir):
 
 def agent_say(yap):
     try:
+        print("<AI>: " + yap)
         return "<AI>: " + yap
     except Exception as e:
         return f"Error yapping: {str(e)}"
