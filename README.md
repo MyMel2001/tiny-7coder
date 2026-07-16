@@ -44,13 +44,7 @@ Clone the repository:
 
 ```bash
 git clone <repository-url>
-cd tiny-7coder
-```
-
-Make the script executable:
-
-```bash
-chmod +x tiny-7coder.py
+cd /your/project/path
 ```
 
 Run it:
