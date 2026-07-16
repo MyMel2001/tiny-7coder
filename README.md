@@ -39,6 +39,8 @@ The process repeats until the task is complete.
 * A Unix-like environment (Linux/macOS recommended)
 
 ## Installation
+Follow instructions to create .env
+
 
 Clone the repository:
 
