@@ -81,7 +81,7 @@ EOF
 
     printf '%s\n' "$RESPONSE" >> "$LOG_FILE"
 
-    if printf '%s\n' "$RESPONSE" | grep -qx "IAMDONE"; then
+    if [ "$RESPONSE" == *"IAMDONE"* ]; then
         echo "Goal completed."
         touch "$DONE_FILE"
         exit 0
