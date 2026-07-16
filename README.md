@@ -8,7 +8,7 @@ Instead of being a large framework, plugin system, or complicated automation pla
 
 ## Features
 
-* 🪶 **Tiny footprint** — built with Python's standard library only
+* 🪶 **Tiny footprint** — built with only Bash and Python's standard library
 * 🤖 **AI-powered task execution** — uses a local or remote model endpoint
 * 🛠️ **Simple tool interface**
 
