@@ -1,3 +1,4 @@
+#!/bin/bash
 while true
 do
 read -p "request >" req
