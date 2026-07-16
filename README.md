@@ -2,6 +2,8 @@
 
 A return to form for **7coder** — going back to its origins of being a simple tool.
 
+"Not a coding platform. Just a model with hands." --ChatGPT
+
 `tiny-7coder` is a small, dependency-free Unix-like systems agent designed to do one thing well: take a user's request, reason through the task with an AI model, and perform actions directly on the local system through a minimal set of tools.
 
 Instead of being a large framework, plugin system, or complicated automation platform, tiny-7coder focuses on simplicity. It is a lightweight command-line companion that connects an LLM to a handful of practical system operations.
