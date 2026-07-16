@@ -128,6 +128,8 @@ fi
 
 LAST_TOOL_OUTPUT="[Session initialized. Choose your first tool action.]"
 
+PROMPT=$USER_INPUT
+
 # --- Autonomous Agent Loop ---
 while true; do
     CURRENT_PWD=$(execute_bg "pwd" | tr -d '\n\r')
