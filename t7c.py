@@ -182,16 +182,18 @@ You have access to these tools:
 1. read_file <file_path> : Reads a file's content.
 2. append_file <file_path> <content> : Appends text to a file.
 3. replace_file <file_path> <content> : Overwrites/creates a file with content.
-4. bash <command> : Runs a standard shell command. (Only use when tools can't do what you need.)
-5. list_files <dir_path> : Lists all files in a directory.
-6. get_site_contents <url> : Gets HTML source of page via CURL
-7. web_search <query> : Gets HTML source of a web search via CURL.
-8. agent_say <msg> : Echo out a message to the user.
+4. list_files <dir_path> : Lists all files in a directory.
+5. get_site_contents <url> : Gets HTML source of page via CURL
+6. web_search <query> : Gets HTML source of a web search via CURL.
+7. agent_say <msg> : Echo out a message to the user.
+8. bash <command> : Runs a standard shell command.
+
 
 Rules:
 1. You work in an iterative loop. Output exactly ONE tool call at a time.
 2. If the task is fully completed, output the word 'DONE' instead of a tool call.
-3. Output ONLY the raw executable command or 'DONE'. Do not wrap in markdown, backticks, or write explanations."""
+3. Output ONLY the raw executable command or 'DONE'. Do not wrap in markdown, backticks, or write explanations.
+4. The 'bash' tool is dangerous! ONLY USE 'bash' when ANOTHER TOOL or a combination of other tools CAN NOT do what you need."""
 
 # --- Main Agent Loop ---
 def main():
