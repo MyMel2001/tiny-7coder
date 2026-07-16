@@ -35,6 +35,7 @@ if os.path.exists(ENV_FILE):
 # Set defaults
 MODEL = os.environ.get("MODEL", "deepseek-v4-flash:cloud")
 HOST = os.environ.get("HOST", "127.0.0.1:11434")
+SEARCH_PREFIX = os.environ.get("SEARCH_PREFIX", "https://searx.nodemixaholic.com/search?q=")
 VERIFY_SSL = os.environ.get("VERIFY_SSL", "false").lower() not in ("false", "0", "no")
 
 
@@ -97,6 +98,40 @@ def list_files(dir):
     except Exception as e:
         return f"Error listing files: {str(e)}"
 
+def get_site_contents(url):
+    try:
+        result = subprocess.run(
+            "curl " + url,
+            shell=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+            timeout=120
+        )
+        output = result.stdout
+        if result.stderr:
+            output += "\nSTDERR:\n" + result.stderr
+        return output.strip()
+    except Exception as e:
+        return f"Error getting site contents: {str(e)}"
+
+def web_search(q):
+    try:
+        result = subprocess.run(
+            "curl " + SEARCH_PREFIX + q,
+            shell=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+            timeout=120
+        )
+        output = result.stdout
+        if result.stderr:
+            output += "\nSTDERR:\n" + result.stderr
+        return output.strip()
+    except Exception as e:
+        return f"Error getting site contents: {str(e)}"
+
 # --- Tool Execution Router ---
 def execute_tool(proposed_command):
     parts = proposed_command.strip().split(maxsplit=1)
@@ -122,6 +157,10 @@ def execute_tool(proposed_command):
         return run_bash(args)
     elif tool == "list_files":
         return list_files(args)
+    elif tool == "get_site_contents":
+        return get_site_contents(args)
+    elif tool == "web_search":
+        return web_search(args)
     else:
         # Fallback: if no clear tool prefix is matched, treat the whole line as a bash command
         return run_bash(proposed_command)
@@ -136,6 +175,8 @@ You have access to these tools:
 3. replace_file <file_path> <content> : Overwrites/creates a file with content.
 4. bash <command> : Runs a standard shell command.
 5. list_files <dir_path> : Lists all files in a directory.
+6. get_site_contents <url> : Gets HTML source of page via CURL
+7. web_search <query> : Gets HTML source of a web search via CURL.
 
 Rules:
 1. You work in an iterative loop. Output exactly ONE tool call at a time.
