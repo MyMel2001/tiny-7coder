@@ -77,7 +77,7 @@ EOF
 
     echo "[$(date)] iteration $iteration" >> "$LOG_FILE"
 
-    RESPONSE=$(bash $SCRIPT_DIR/t7c.sh "$PROMPT" 2>&1 || true)
+    RESPONSE=$(python3 $SCRIPT_DIR/t7c.py "$PROMPT" 2>&1 || true)
 
     printf '%s\n' "$RESPONSE" >> "$LOG_FILE"
 
