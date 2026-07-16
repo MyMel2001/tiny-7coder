@@ -13,6 +13,8 @@ set -eu
 MAX_ITERATIONS="${MAX_ITERATIONS:-20}"
 WORKDIR="${RALPH_WORKDIR:-.ralph-tiny-7coder}"
 
+SCRIPT_DIR=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
+
 mkdir -p "$WORKDIR"
 
 GOAL_FILE="$WORKDIR/goal.txt"
@@ -75,7 +77,7 @@ EOF
 
     echo "[$(date)] iteration $iteration" >> "$LOG_FILE"
 
-    RESPONSE=$(tiny-7coder "$PROMPT" 2>&1 || true)
+    RESPONSE=$(bash $SCRIPT_DIR/t7c.sh "$PROMPT" 2>&1 || true)
 
     printf '%s\n' "$RESPONSE" >> "$LOG_FILE"
 
