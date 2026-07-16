@@ -101,7 +101,7 @@ def list_files(dir):
 def get_site_contents(url):
     try:
         result = subprocess.run(
-            "curl " + url,
+            "curl '" + url + "'",
             shell=True,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
@@ -118,7 +118,7 @@ def get_site_contents(url):
 def web_search(q):
     try:
         result = subprocess.run(
-            "curl " + SEARCH_PREFIX + q,
+            "curl '" + SEARCH_PREFIX + q + "'",
             shell=True,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
