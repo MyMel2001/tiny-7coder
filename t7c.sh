@@ -129,8 +129,8 @@ echo "Type your request below (e.g. 'list files in the current folder')"
 echo "------------------------------------------------------------------"
 
 while true; do
-    printf "\nUser > "
-    read -r USER_INPUT
+    echo "User > "
+    read USER_INPUT
 
     # Append user message to conversation history
     MESSAGES=$(echo "$MESSAGES" | jq --arg msg "$USER_INPUT" '. + [{"role": "user", "content": $msg}]')
