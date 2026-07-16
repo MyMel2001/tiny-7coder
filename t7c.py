@@ -108,7 +108,7 @@ def agent_say(yap):
 def get_site_contents(url):
     try:
         result = subprocess.run(
-            "curl '" + url + "'",
+            "curl -L '" + url + "'",
             shell=True,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
@@ -126,7 +126,7 @@ def web_search(q):
     try:
         url = SEARCH_PREFIX + urllib.parse.quote_plus(q)
         result = subprocess.run(
-            ["curl", url],
+            "curl -L '" +  url + "'",
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             text=True,
