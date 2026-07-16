@@ -192,7 +192,7 @@ def main():
             print("Task completed successfully.")
             sys.exit(0)
 
-        print(f"Proposed Command: {final_cmd}")
+        print(f"Command: {final_cmd}")
         
 
         print("Executing...")
