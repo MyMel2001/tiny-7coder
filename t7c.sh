@@ -136,7 +136,7 @@ LAST_TOOL_OUTPUT="[Session initialized. Choose your first tool action.]"
 while true; do
     CURRENT_PWD=$(execute_bg "pwd" | tr -d '\n\r')
 
-    echo -e "\n🤖 \033[1;34mThinking ($MODEL)...\033[0m" >&2
+    echo -e "Thinking ($MODEL)..." 
 
     PROMPT="System: $SYSTEM_PROMPT
 Context: OS=$PRETTY_NAME | User=$USER | PWD=$CURRENT_PWD
@@ -152,7 +152,7 @@ Original User Goal: $USER_INPUT"
 
     # Validate JSON parsing
     if ! echo "$RAW_JSON" | jq . >/dev/null 2>&1; then
-        echo "❌ Error: Model did not return valid JSON. Retrying..."
+        echo "Error: Model did not return valid JSON. Retrying..."
         LAST_TOOL_OUTPUT="Error: Your output was not valid JSON. Please try again using strictly the JSON tool formats."
         continue
     fi
@@ -163,7 +163,7 @@ Original User Goal: $USER_INPUT"
     case "$TOOL_NAME" in
         "execute_bash")
             CMD=$(echo "$RAW_JSON" | jq -r '.command')
-            echo -e "\n🛠️  \033[1;33m[TOOL: BASH]\033[0m $CMD"
+            echo -e "\n[TOOL: BASH] $CMD"
             
             # Execute command statefully
             LAST_TOOL_OUTPUT=$(execute_bg "$CMD")
@@ -172,56 +172,56 @@ Original User Goal: $USER_INPUT"
 
         "read_file")
             FILE_PATH=$(echo "$RAW_JSON" | jq -r '.path')
-            echo -e "\n📖 \033[1;33m[TOOL: READ]\033[0m $FILE_PATH"
+            echo -e "\n[TOOL: READ] $FILE_PATH"
             
             if [ -f "$FILE_PATH" ]; then
                 LAST_TOOL_OUTPUT=$(cat "$FILE_PATH")
                 echo "$LAST_TOOL_OUTPUT"
             else
                 LAST_TOOL_OUTPUT="Error: File '$FILE_PATH' does not exist."
-                echo "❌ $LAST_TOOL_OUTPUT"
+                echo "$LAST_TOOL_OUTPUT"
             fi
             ;;
 
         "replace_file")
             FILE_PATH=$(echo "$RAW_JSON" | jq -r '.path')
             CONTENT=$(echo "$RAW_JSON" | jq -r '.content')
-            echo -e "\n💾 \033[1;33m[TOOL: EDIT]\033[0m $FILE_PATH"
+            echo -e "\n[TOOL: REPLACE TEXT] $FILE_PATH"
             
             # Overwrite file cleanly using cat heredoc to prevent shell escape corruption
             if echo "$CONTENT" > "$FILE_PATH"; then
                 LAST_TOOL_OUTPUT="Success: File '$FILE_PATH' was successfully written."
-                echo "✅ File updated."
+                echo "File updated."
             else
                 LAST_TOOL_OUTPUT="Error: Failed to write to '$FILE_PATH'."
-                echo "❌ $LAST_TOOL_OUTPUT"
+                echo "$LAST_TOOL_OUTPUT"
             fi
             ;;
         
         "append_file")
             FILE_PATH=$(echo "$RAW_JSON" | jq -r '.path')
             CONTENT=$(echo "$RAW_JSON" | jq -r '.content')
-            echo -e "\n💾 \033[1;33m[TOOL: EDIT]\033[0m $FILE_PATH"
+            echo -e "\[TOOL: APPEND TEXT] $FILE_PATH"
             
             # Overwrite file cleanly using cat heredoc to prevent shell escape corruption
             if echo "$CONTENT" >> "$FILE_PATH"; then
                 LAST_TOOL_OUTPUT="Success: File '$FILE_PATH' was successfully written."
-                echo "✅ File updated."
+                echo "File updated."
             else
                 LAST_TOOL_OUTPUT="Error: Failed to write to '$FILE_PATH'."
-                echo "❌ $LAST_TOOL_OUTPUT"
+                echo "$LAST_TOOL_OUTPUT"
             fi
             ;;
 
         "done")
             SUMMARY=$(echo "$RAW_JSON" | jq -r '.summary')
-            echo -e "\n✅ \033[1;32m[TASK COMPLETE]\033[0m"
+            echo -e "[TASK COMPLETE]"
             echo -e "Summary: $SUMMARY\n"
             break
             ;;
 
         *)
-            echo "❌ Error: Unknown tool '$TOOL_NAME' requested by model."
+            echo "Error: Unknown tool '$TOOL_NAME' requested by model."
             LAST_TOOL_OUTPUT="Error: The tool '$TOOL_NAME' is invalid. Choose either execute_bash, read_file, replace_file, append_file, or done."
             ;;
     esac
