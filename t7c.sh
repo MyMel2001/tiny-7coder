@@ -86,10 +86,6 @@ cleanup() {
     if [ -n "${TMP_DIR:-}" ]; then
         rm -rf "$TMP_DIR"
     fi
-
-    if [ -n "${SHELL_PID:-}" ]; then
-        kill "$SHELL_PID" 2>/dev/null || true
-    fi
 }
 
 trap cleanup EXIT
