@@ -34,8 +34,8 @@ if os.path.exists(ENV_FILE):
 
 # Set defaults
 MODEL = os.environ.get("MODEL", "deepseek-v4-flash:cloud")
-HOST = os.environ.get("HOST", "100.118.11.83:11434")
-VERIFY_SSL = os.environ.get("VERIFY_SSL", "true").lower() not in ("false", "0", "no")
+HOST = os.environ.get("HOST", "127.0.0.1:11434")
+VERIFY_SSL = os.environ.get("VERIFY_SSL", "false").lower() not in ("false", "0", "no")
 
 
 PROJECT_DIR = os.getcwd()
