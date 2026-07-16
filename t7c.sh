@@ -4,12 +4,11 @@
 set -euo pipefail
 
 # --- Configuration Section ---
-CONFIG_DIR="$HOME/.config/nodemixaholic-software/7coder-harness"
+CONFIG_DIR="$HOME/.config/nodemixaholic-software/tiny-7coder"
 mkdir -p "$CONFIG_DIR" > /dev/null 2>&1
 
 # Source environment variables from .env if it exists in the script's directory
-T7C_DIR="$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
-ENV_FILE="$T7C_DIR/.env"
+ENV_FILE="$CONFIG_DIR/.env"
 
 if [ -f "$ENV_FILE" ]; then
     while IFS= read -r line || [ -n "$line" ]; do
