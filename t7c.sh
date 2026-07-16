@@ -134,11 +134,6 @@ while true; do
 
     echo -e "Thinking ($MODEL)..." 
 
-    PROMPT="System: $SYSTEM_PROMPT
-Context: OS=$PRETTY_NAME | User=$USER | PWD=$CURRENT_PWD
-Last Tool Output: $LAST_TOOL_OUTPUT
-Original User Goal: $USER_INPUT"
-
     # Call LLM
     PAYLOAD=$(jq -n --arg m "$MODEL" --arg p "$PROMPT" '{model: $m, prompt: $p, stream: false}')
     RESPONSE=$(curl -s -X POST "http://$HOST/api/generate" -H "Content-Type: application/json" -d "$PAYLOAD")
