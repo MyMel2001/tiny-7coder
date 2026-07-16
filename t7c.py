@@ -42,7 +42,6 @@ PROJECT_DIR = os.getcwd()
 # --- Helper Tool Functions ---
 def read_file(filepath):
     try:
-        filepath = PROJECT_DIR + "/" + filepath
         with open(filepath, "r", encoding="utf-8") as f:
             return f.read()
     except Exception as e:
@@ -50,7 +49,6 @@ def read_file(filepath):
 
 def append_file(filepath, content):
     try:
-        filepath = PROJECT_DIR + "/" + filepath
         with open(filepath, "a", encoding="utf-8") as f:
             f.write(content + "\n")
         return f"Successfully appended to {filepath}"
@@ -59,7 +57,6 @@ def append_file(filepath, content):
 
 def replace_file(filepath, content):
     try:
-        filepath = PROJECT_DIR + "/" + filepath
         with open(filepath, "w", encoding="utf-8") as f:
             f.write(content)
         return f"Successfully wrote to {filepath}"
@@ -85,7 +82,6 @@ def run_bash(command):
 
 def list_files(dir):
     try:
-        dir = PROJECT_DIR + "/" + dir
         result = subprocess.run(
             "ls -lah " + dir,
             shell=True,
@@ -144,8 +140,7 @@ You have access to these tools:
 Rules:
 1. You work in an iterative loop. Output exactly ONE tool call at a time.
 2. If the task is fully completed, output the word 'DONE' instead of a tool call.
-3. Output ONLY the raw executable command or 'DONE'. Do not wrap in markdown, backticks, or write explanations.
-4. For every tool except bash we prepend the path with the user's project folder. The current project folder is: '""" + PROJECT_DIR + """'."""
+3. Output ONLY the raw executable command or 'DONE'. Do not wrap in markdown, backticks, or write explanations."""
 
 # --- Main Agent Loop ---
 def main():
