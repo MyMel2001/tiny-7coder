@@ -145,7 +145,7 @@ Rules:
 1. You work in an iterative loop. Output exactly ONE tool call at a time.
 2. If the task is fully completed, output the word 'DONE' instead of a tool call.
 3. Output ONLY the raw executable command or 'DONE'. Do not wrap in markdown, backticks, or write explanations.
-4. For every tool except bash we prepend the path with the user's project folder. The current project folder is: '""" + PROJECT_DIR """'."""
+4. For every tool except bash we prepend the path with the user's project folder. The current project folder is: '""" + PROJECT_DIR + """'."""
 
 # --- Main Agent Loop ---
 def main():
