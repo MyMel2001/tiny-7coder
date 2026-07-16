@@ -194,15 +194,6 @@ def main():
 
         print(f"Proposed Command: {final_cmd}")
         
-        try:
-            confirmation = input("Run this step? (y/N): ").strip().lower()
-        except (KeyboardInterrupt, EOFError):
-            print("\nAborted by user.")
-            sys.exit(0)
-
-        if confirmation != 'y':
-            print("Aborted by user.")
-            sys.exit(0)
 
         print("Executing...")
         output = execute_tool(final_cmd)
