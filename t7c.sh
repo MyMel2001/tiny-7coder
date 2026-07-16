@@ -128,7 +128,11 @@ fi
 
 LAST_TOOL_OUTPUT="[Session initialized. Choose your first tool action.]"
 
-PROMPT=$USER_INPUT
+PROMPT="SYSTEM DIRECTIONS:
+$SYSTEM_PROMPT
+
+USER DIRECTIONS:
+$USER_INPUT"
 
 # --- Autonomous Agent Loop ---
 while true; do
