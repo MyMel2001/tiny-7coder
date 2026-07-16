@@ -182,7 +182,7 @@ You have access to these tools:
 1. read_file <file_path> : Reads a file's content.
 2. append_file <file_path> <content> : Appends text to a file.
 3. replace_file <file_path> <content> : Overwrites/creates a file with content.
-4. bash <command> : Runs a standard shell command.
+4. bash <command> : Runs a standard shell command. (Only use when tools can't do what you need.)
 5. list_files <dir_path> : Lists all files in a directory.
 6. get_site_contents <url> : Gets HTML source of page via CURL
 7. web_search <query> : Gets HTML source of a web search via CURL.
