@@ -45,7 +45,7 @@ if [ -z "$API_KEY" ]; then
 fi
 cd "$PROJECT_DIR"
 # Unique temporary paths for persistent background shell (Haiku, Mac, Linux friendly)
-TMP_DIR=$(mktemp -d -t claude-harness-XXXXXX)
+TMP_DIR=$(mktemp -d -t 7cl-harness-XXXXXX)
 FIFO_IN="$TMP_DIR/bash_in"
 FIFO_OUT="$TMP_DIR/bash_out"
 
@@ -131,11 +131,6 @@ echo "------------------------------------------------------------------"
 while true; do
     printf "\nUser > "
     read -r USER_INPUT
-    
-    # SAFE EMPTY CHECK: Standard if-statement prevents 'set -e' from crashing
-    if [ -z "$USER_INPUT" ]; then
-        continue
-    fi
 
     # Append user message to conversation history
     MESSAGES=$(echo "$MESSAGES" | jq --arg msg "$USER_INPUT" '. + [{"role": "user", "content": $msg}]')
