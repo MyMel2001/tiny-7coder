@@ -186,7 +186,7 @@ You have access to these tools:
 5. get_site_contents <url> : Gets HTML source of page via CURL
 6. web_search <query> : Gets HTML source of a web search via CURL.
 7. agent_say <msg> : Echo out a message to the user.
-8. bash <command> : Runs a standard shell command.
+8. bash <command> : Runs a standard shell command. ONLY USE THIS WHEN ABSOLUTELY NEEDED. PRIORITIZE THE OTHER TOOLS.
 
 
 Rules:
