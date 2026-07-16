@@ -141,11 +141,13 @@ while true; do
     echo -e "Thinking ($MODEL)..." 
 
     # Call LLM
-    PAYLOAD=$(jq -n --arg m "$MODEL" --arg p "$PROMPT" '{model: $m, prompt: $p, stream: false}')
-    RESPONSE=$(curl -s -X POST "http://$HOST/api/generate" -H "Content-Type: application/json" -d "$PAYLOAD")
+    PLAN_PAYLOAD=$(jq -n --arg m "$MODEL" --arg p "$PROMPT" '{model: $m, prompt: $p, stream: false}')
+    PLAN_RESPONSE=$(curl -s -X POST "http://$HOST/api/generate" \
+  -H "Content-Type: application/json" \
+  -d "$PLAN_PAYLOAD")
     
     # Extract the tool JSON payload
-    RAW_JSON=$(echo "$RESPONSE" | jq -r '.response' | sed -e 's/^`*json//' -e 's/`*$//' | tr -d '\n\r')
+    RAW_JSON=$(echo "$PLAN_RESPONSE" | jq -r '.response')
 
     # Validate JSON parsing
     if ! echo "$RAW_JSON" | jq . >/dev/null 2>&1; then
