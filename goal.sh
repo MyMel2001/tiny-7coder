@@ -67,7 +67,7 @@ Your job:
 - Make the next useful change.
 - Use tiny-7coder tools normally.
 - If the goal is fully complete, output exactly:
-DONE
+IAMDONE
 
 Do not claim completion unless the goal is actually satisfied.
 EOF
@@ -79,7 +79,7 @@ EOF
 
     printf '%s\n' "$RESPONSE" >> "$LOG_FILE"
 
-    if printf '%s\n' "$RESPONSE" | grep -qx "DONE"; then
+    if printf '%s\n' "$RESPONSE" | grep -qx "IAMDONE"; then
         echo "Goal completed."
         touch "$DONE_FILE"
         exit 0
