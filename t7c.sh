@@ -1,228 +1,222 @@
 #!/usr/bin/env bash
 
-set -eo pipefail
+# Strict error handling
+set -euo pipefail
 
-# === CONFIGURATION ===
-PROJECT_DIR="$(realpath .)"
-T7C_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" >/dev/null 2>&1 && pwd)"
+# --- Configuration Section ---
+CONFIG_DIR="$HOME/.config/nodemixaholic-software/7coder-harness"
+mkdir -p "$CONFIG_DIR" > /dev/null 2>&1
 
-cd "$T7C_DIR"
-
-ENV_FILE=".env"
+# Source environment variables from .env if it exists in the script's directory
+T7C_DIR="$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
+ENV_FILE="$T7C_DIR/.env"
 
 if [ -f "$ENV_FILE" ]; then
     while IFS= read -r line || [ -n "$line" ]; do
         [[ "$line" =~ ^[[:space:]]*# ]] && continue
         [[ "$line" =~ ^[[:space:]]*$ ]] && continue
-
         if [[ "$line" =~ ^([^=]+)=(.*)$ ]]; then
             key=$(echo "${BASH_REMATCH[1]}" | xargs)
             val="${BASH_REMATCH[2]}"
-
-            val="${val%\"}"
-            val="${val#\"}"
-            val="${val%\'}"
-            val="${val#\'}"
-
+            val="${val%\"}"; val="${val#\"}"
+            val="${val%\'}"; val="${val#\'}"
             export "$key=$val"
         fi
     done < "$ENV_FILE"
-else
-    echo "Warning: $ENV_FILE file not found." >&2
 fi
 
-API_URL="${OPENAI_API_BASE:-https://api.openai.com/v1}/chat/completions"
-MODEL="${OPENAI_MODEL_NAME:-gpt-4o-mini}"
-API_KEY="${OPENAI_API_KEY:-}"
+# Model & Host Settings
+MODEL="${MODEL_NAME:-deepseek-v4-flash:cloud}"
+HOST="${API_HOST:-100.118.11.83:11434}"
 
-if [ -z "$API_KEY" ]; then
-    echo "Error: OPENAI_API_KEY environment variable is not set." >&2
+# --- Dependency Check ---
+if ! command -v jq &> /dev/null; then
+    echo "❌ Error: 'jq' is required to parse JSON safely. Please install it." >&2
     exit 1
 fi
 
-cd "$PROJECT_DIR"
+# --- System Prompt ---
+SYSTEM_PROMPT="You are an autonomous Unix software agent. Your goal is to solve the user's request.
+You execute your tasks by generating structured TOOL CALLS. You will run in a loop, observing the results of your actions until the task is complete.
 
-TMP_DIR=$(mktemp -d "${TMPDIR:-/tmp}/7cl-harness.XXXXXX")
+You have access to 3 tools. To use a tool, output a JSON block matching one of these formats:
 
-FIFO_IN="$TMP_DIR/bash_in"
-FIFO_OUT="$TMP_DIR/bash_out"
-
-cleanup() {
-    jobs -p | xargs -r kill 2>/dev/null || true
-    rm -rf "$TMP_DIR"
+1. To execute a shell command:
+{
+  \"tool\": \"execute_bash\",
+  \"command\": \"your command here\"
 }
 
+2. To read the full contents of a file:
+{
+  \"tool\": \"read_file\",
+  \"path\": \"relative/or/absolute/path/to/file\"
+}
+
+3. To overwrite/create a file with specific content:
+{
+  \"tool\": \"replace_file\",
+  \"path\": \"path/to/file\",
+  \"content\": \"new content goes here\"
+}
+
+3. To append a file with specific content:
+{
+  \"tool\": \"append_file\",
+  \"path\": \"path/to/file\",
+  \"content\": \"new content goes here\"
+}
+
+If you have completely solved the user's request and no further actions are needed, output:
+{
+  \"tool\": \"done\",
+  \"summary\": \"A short description of what you accomplished\"
+}
+
+Rules:
+- Choose ONLY ONE tool call per turn.
+- Output ONLY the raw JSON block. No markdown, no backticks, no conversational text.
+- Do not overcomplicate shell commands."
+
+# --- Initialize Stateful Background Shell ---
+TMP_DIR=$(mktemp -d -t 7coder-XXXXXX)
+FIFO_IN="$TMP_DIR/in"
+FIFO_OUT="$TMP_DIR/out"
+
+cleanup() {
+    rm -rf "$TMP_DIR"
+    kill $(jobs -p) 2>/dev/null || true
+}
 trap cleanup EXIT
 
-mkfifo "$FIFO_IN"
-mkfifo "$FIFO_OUT"
+mkfifo "$FIFO_IN" "$FIFO_OUT"
+bash --noprofile --norc -i < "$FIFO_IN" > "$FIFO_OUT" 2>&1 &
 
-bash --noprofile --norc -i \
-    < "$FIFO_IN" \
-    > "$FIFO_OUT" \
-    2>&1 &
+exec 3> "$FIFO_IN"
+exec 4< "$FIFO_OUT"
 
-exec 3>"$FIFO_IN"
-exec 4<"$FIFO_OUT"
-
-execute_bg_command() {
+# Persistent Shell Execution
+execute_bg() {
     local cmd="$1"
-    local sentinel="CMD_DONE_${RANDOM}_${RANDOM}"
-
+    local sentinel="CMD_DONE_$(cat /dev/urandom | env LC_ALL=C tr -dc 'a-zA-Z0-9' | fold -w 16 | head -n 1)"
     echo "$cmd" >&3
     echo "echo $sentinel" >&3
-
     while IFS= read -r line <&4; do
-        if [[ "$line" == *"$sentinel"* ]]; then
-            break
-        fi
+        [[ "$line" == *"$sentinel"* ]] && break
         echo "$line"
     done
 }
 
-TOOLS_JSON=$(cat <<EOF
-[
-  {
-    "type": "function",
-    "function": {
-      "name": "execute_bash",
-      "description": "Execute a command in a persistent Bash session.",
-      "parameters": {
-        "type": "object",
-        "properties": {
-          "command": {
-            "type": "string",
-            "description": "Command to execute"
-          }
-        },
-        "required": ["command"]
-      }
-    }
-  }
-]
-EOF
-)
+# Identify the Host OS
+[ -f /etc/os-release ] && . /etc/os-release || PRETTY_NAME="$(uname -s)"
 
-MESSAGES=$(cat <<EOF
-[
-  {
-    "role": "system",
-    "content": "You are a stateful terminal assistant. You have access to execute_bash. Use it to interact with the user's computer. Run commands when needed and continue until the task is complete."
-  }
-]
-EOF
-)
+# Run initialization in current directory
+execute_bg "cd '$(pwd)'" > /dev/null
 
-echo "=== OpenAI-Compatible Bash Harness Activated ==="
-echo "Endpoint: $API_URL"
-echo "Model: $MODEL"
-echo "Operating System: $(uname -s)"
-echo "Type your request below."
+# --- UI & Input ---
+echo "=== 7coder Autonomous Harness Active ==="
+echo "Host: $HOST | Model: $MODEL | OS: $PRETTY_NAME"
 echo "------------------------------------------------------------------"
 
-while true; do
-    echo "User > "
+printf "\n\033[1;35mUser Request >\033[0m "
+if ! read -r USER_INPUT || [ -z "$USER_INPUT" ]; then
+    echo "Empty input. Exiting."
+    exit 0
+fi
 
-    if ! read -r USER_INPUT; then
-        echo
-        echo "Exiting."
-        break
+LAST_TOOL_OUTPUT="[Session initialized. Choose your first tool action.]"
+
+# --- Autonomous Agent Loop ---
+while true; do
+    CURRENT_PWD=$(execute_bg "pwd" | tr -d '\n\r')
+
+    echo -e "\n🤖 \033[1;34mThinking ($MODEL)...\033[0m" >&2
+
+    PROMPT="System: $SYSTEM_PROMPT
+Context: OS=$PRETTY_NAME | User=$USER | PWD=$CURRENT_PWD
+Last Tool Output: $LAST_TOOL_OUTPUT
+Original User Goal: $USER_INPUT"
+
+    # Call LLM
+    PAYLOAD=$(jq -n --arg m "$MODEL" --arg p "$PROMPT" '{model: $m, prompt: $p, stream: false}')
+    RESPONSE=$(curl -s -X POST "http://$HOST/api/generate" -H "Content-Type: application/json" -d "$PAYLOAD")
+    
+    # Extract the tool JSON payload
+    RAW_JSON=$(echo "$RESPONSE" | jq -r '.response' | sed -e 's/^`*json//' -e 's/`*$//' | tr -d '\n\r')
+
+    # Validate JSON parsing
+    if ! echo "$RAW_JSON" | jq . >/dev/null 2>&1; then
+        echo "❌ Error: Model did not return valid JSON. Retrying..."
+        LAST_TOOL_OUTPUT="Error: Your output was not valid JSON. Please try again using strictly the JSON tool formats."
+        continue
     fi
 
-    MESSAGES=$(echo "$MESSAGES" |
-        jq --arg msg "$USER_INPUT" \
-        '. + [{"role":"user","content":$msg}]'
-    )
+    TOOL_NAME=$(echo "$RAW_JSON" | jq -r '.tool')
 
-    while true; do
-        echo "Thinking..."
+    # --- Tool router ---
+    case "$TOOL_NAME" in
+        "execute_bash")
+            CMD=$(echo "$RAW_JSON" | jq -r '.command')
+            echo -e "\n🛠️  \033[1;33m[TOOL: BASH]\033[0m $CMD"
+            
+            # Execute command statefully
+            LAST_TOOL_OUTPUT=$(execute_bg "$CMD")
+            echo "$LAST_TOOL_OUTPUT"
+            ;;
 
-        REQUEST_BODY=$(jq -n \
-            --arg model "$MODEL" \
-            --argjson tools "$TOOLS_JSON" \
-            --argjson messages "$MESSAGES" \
-            '{
-                model:$model,
-                tools:$tools,
-                messages:$messages
-            }'
-        )
-
-        API_RESPONSE=$(curl -s "$API_URL" \
-            -H "Authorization: Bearer $API_KEY" \
-            -H "Content-Type: application/json" \
-            --data-binary "$REQUEST_BODY"
-        )
-
-        if echo "$API_RESPONSE" | jq -e '.error' >/dev/null 2>&1; then
-            echo "API Error:"
-            echo "$API_RESPONSE" | jq '.error'
-            break
-        fi
-
-        CHOICE=$(echo "$API_RESPONSE" | jq '.choices[0]')
-        MESSAGE=$(echo "$CHOICE" | jq '.message')
-        FINISH_REASON=$(echo "$CHOICE" | jq -r '.finish_reason')
-
-        MESSAGES=$(echo "$MESSAGES" |
-            jq --argjson msg "$MESSAGE" \
-            '. + [$msg]'
-        )
-
-        if [ "$FINISH_REASON" = "tool_calls" ]; then
-
-            TOOL_CALL=$(echo "$MESSAGE" | jq '.tool_calls[0]')
-
-            TOOL_ID=$(echo "$TOOL_CALL" |
-                jq -r '.id'
-            )
-
-            TOOL_NAME=$(echo "$TOOL_CALL" |
-                jq -r '.function.name'
-            )
-
-            TOOL_ARGS_RAW=$(echo "$TOOL_CALL" |
-                jq -r '.function.arguments'
-            )
-
-            TOOL_CMD=$(echo "$TOOL_ARGS_RAW" |
-                jq -r '.command'
-            )
-
-            echo
-            echo "[Tool Request]"
-            echo "$TOOL_CMD"
-            echo
-
-            TOOL_OUTPUT=$(execute_bg_command "$TOOL_CMD")
-
-            echo "$TOOL_OUTPUT"
-
-            MESSAGES=$(echo "$MESSAGES" |
-                jq \
-                --arg id "$TOOL_ID" \
-                --arg name "$TOOL_NAME" \
-                --arg output "$TOOL_OUTPUT" \
-                '. + [{
-                    role:"tool",
-                    tool_call_id:$id,
-                    name:$name,
-                    content:$output
-                }]'
-            )
-
-        else
-            TEXT_RESPONSE=$(echo "$MESSAGE" |
-                jq -r '.content'
-            )
-
-            if [ "$TEXT_RESPONSE" != "null" ]; then
-                echo
-                echo "Assistant > $TEXT_RESPONSE"
+        "read_file")
+            FILE_PATH=$(echo "$RAW_JSON" | jq -r '.path')
+            echo -e "\n📖 \033[1;33m[TOOL: READ]\033[0m $FILE_PATH"
+            
+            if [ -f "$FILE_PATH" ]; then
+                LAST_TOOL_OUTPUT=$(cat "$FILE_PATH")
+                echo "$LAST_TOOL_OUTPUT"
+            else
+                LAST_TOOL_OUTPUT="Error: File '$FILE_PATH' does not exist."
+                echo "❌ $LAST_TOOL_OUTPUT"
             fi
+            ;;
 
+        "replace_file")
+            FILE_PATH=$(echo "$RAW_JSON" | jq -r '.path')
+            CONTENT=$(echo "$RAW_JSON" | jq -r '.content')
+            echo -e "\n💾 \033[1;33m[TOOL: EDIT]\033[0m $FILE_PATH"
+            
+            # Overwrite file cleanly using cat heredoc to prevent shell escape corruption
+            if echo "$CONTENT" > "$FILE_PATH"; then
+                LAST_TOOL_OUTPUT="Success: File '$FILE_PATH' was successfully written."
+                echo "✅ File updated."
+            else
+                LAST_TOOL_OUTPUT="Error: Failed to write to '$FILE_PATH'."
+                echo "❌ $LAST_TOOL_OUTPUT"
+            fi
+            ;;
+        
+        "append_file")
+            FILE_PATH=$(echo "$RAW_JSON" | jq -r '.path')
+            CONTENT=$(echo "$RAW_JSON" | jq -r '.content')
+            echo -e "\n💾 \033[1;33m[TOOL: EDIT]\033[0m $FILE_PATH"
+            
+            # Overwrite file cleanly using cat heredoc to prevent shell escape corruption
+            if echo "$CONTENT" >> "$FILE_PATH"; then
+                LAST_TOOL_OUTPUT="Success: File '$FILE_PATH' was successfully written."
+                echo "✅ File updated."
+            else
+                LAST_TOOL_OUTPUT="Error: Failed to write to '$FILE_PATH'."
+                echo "❌ $LAST_TOOL_OUTPUT"
+            fi
+            ;;
+
+        "done")
+            SUMMARY=$(echo "$RAW_JSON" | jq -r '.summary')
+            echo -e "\n✅ \033[1;32m[TASK COMPLETE]\033[0m"
+            echo -e "Summary: $SUMMARY\n"
             break
-        fi
-    done
-done
+            ;;
 
+        *)
+            echo "❌ Error: Unknown tool '$TOOL_NAME' requested by model."
+            LAST_TOOL_OUTPUT="Error: The tool '$TOOL_NAME' is invalid. Choose either execute_bash, read_file, replace_file, append_file, or done."
+            ;;
+    esac
+done
