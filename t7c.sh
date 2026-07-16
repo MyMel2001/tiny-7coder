@@ -133,7 +133,11 @@ while true; do
     if ! read -r USER_INPUT; then
         break
     fi
-    [ -z "$USER_INPUT" ] && continue
+    
+    # SAFE EMPTY CHECK: Standard if-statement prevents 'set -e' from crashing
+    if [ -z "$USER_INPUT" ]; then
+        continue
+    fi
 
     # Append user message to conversation history
     MESSAGES=$(echo "$MESSAGES" | jq --arg msg "$USER_INPUT" '. + [{"role": "user", "content": $msg}]')
